@@ -8,13 +8,19 @@ from dateutil.parser import parse
 import datetime
 from dateutil.relativedelta import relativedelta
 import logging
+
+# Module-level cache for performance
+_MONTHS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Sept':9,'Oct':10,'Nov':11,'Dec':12, '01':1, '02':2, '03':3, '04':4, '05':5, '06':6, '07':7, '08':8, '09':9, '10':10, '11':11, '12':12}
+_C_WIZ_REGEX = re.compile(r"^1;")
+
 ### METHODS
 
 def lexical_date_parser(date_to_check):
     if date_to_check=='':
         return ('',None)
     datetime_tmp=None
-    date_tmp=copy.copy(date_to_check)
+    # strings are immutable, avoiding redundant copy for performance
+    date_tmp=date_to_check
     try:
         date_tmp = date_tmp[date_tmp.rfind('..')+2:]
         datetime_tmp=dateparser.parse(date_tmp)
@@ -33,21 +39,23 @@ def lexical_date_parser(date_to_check):
 
 
 def define_date(date):
-    months = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Sept':9,'Oct':10,'Nov':11,'Dec':12, '01':1, '02':2, '03':3, '04':4, '05':5, '06':6, '07':7, '08':8, '09':9, '10':10, '11':11, '12':12}
     try:
-        if ' ago' in date.lower():
+        # cache lowercased string and current time for performance
+        date_lower = date.lower()
+        if ' ago' in date_lower:
             q = int(date.split()[-3])
-            if 'minutes' in date.lower() or 'mins' in date.lower():
-                return datetime.datetime.now() + relativedelta(minutes=-q)
-            elif 'hour' in date.lower():
-                return datetime.datetime.now() + relativedelta(hours=-q)
-            elif 'day' in date.lower():
-                return datetime.datetime.now() + relativedelta(days=-q)
-            elif 'week' in date.lower():
-                return datetime.datetime.now() + relativedelta(days=-7*q)
-            elif 'month' in date.lower():
-                return datetime.datetime.now() + relativedelta(months=-q)
-        elif 'yesterday' in date.lower():
+            now = datetime.datetime.now()
+            if 'minutes' in date_lower or 'mins' in date_lower:
+                return now + relativedelta(minutes=-q)
+            elif 'hour' in date_lower:
+                return now + relativedelta(hours=-q)
+            elif 'day' in date_lower:
+                return now + relativedelta(days=-q)
+            elif 'week' in date_lower:
+                return now + relativedelta(days=-7*q)
+            elif 'month' in date_lower:
+                return now + relativedelta(months=-q)
+        elif 'yesterday' in date_lower:
             return datetime.datetime.now() + relativedelta(days=-1)
         else:
             date_list = date.replace('/',' ').split(' ')
@@ -56,7 +64,7 @@ def define_date(date):
             elif len(date_list) == 3:
                 if date_list[0] == '':
                     date_list[0] = '1'
-            return datetime.datetime(day=int(date_list[0]), month=months[date_list[1]], year=int(date_list[2]))
+            return datetime.datetime(day=int(date_list[0]), month=_MONTHS[date_list[1]], year=int(date_list[2]))
     except:
         return float('nan')
 
@@ -313,7 +321,7 @@ class GoogleNews:
             self.response = urllib.request.urlopen(self.req)  # nosec
             self.page = self.response.read()
             self.content = Soup(self.page, "html.parser")
-            articles = self.content.find_all("c-wiz", attrs={"data-node-index": re.compile(r"^1;")})
+            articles = self.content.find_all("c-wiz", attrs={"data-node-index": _C_WIZ_REGEX})
             for article in articles:
                 try:
                     # title

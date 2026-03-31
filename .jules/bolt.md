@@ -1,0 +1,3 @@
+## 2024-05-15 - Redundant Object Creation in Hot Paths
+**Learning:** Instantiating static dictionaries (like month mappings), copying immutable objects (like strings), and repeatedly compiling regular expressions inside scraping loop/methods introduce noticeable overhead over hundreds/thousands of calls.
+**Action:** When working on scraping or loop-intensive processes, ensure that constant dictionaries and regex patterns are moved to module-level variables or cached appropriately. In Python, remember that strings are immutable and do not need to be copied when modified (slicing creates a new string).
