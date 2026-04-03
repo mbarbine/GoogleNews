@@ -324,9 +324,11 @@ class GoogleNews:
             articles = self.content.find_all("c-wiz", attrs={"data-node-index": _C_WIZ_REGEX})
             for article in articles:
                 try:
+                    time_node = article.find("time")
+                    a_tags = article.find_all("a")
                     # title
                     try:
-                        title=article.findAll('a')[1].text
+                        title=a_tags[1].text
                     except:
                         title=None
                     # description
@@ -336,26 +338,26 @@ class GoogleNews:
                         desc=None
                     # date
                     try:
-                        date = article.find("time").text
+                        date = time_node.text
                         # date,datetime_tmp = lexial_date_parser(date)
                     except:
                         date = None
                     # datetime
                     try:
-                        datetime_chars=article.find('time').get('datetime')
+                        datetime_chars=time_node.get('datetime')
                         datetime_obj = parse(datetime_chars).replace(tzinfo=None)
                     except:
                         datetime_obj=None
                     # link
                     if deamplify:
                         try:
-                            link = 'https://news.google.com/' + article.find("a").get("href")[2:]
+                            link = 'https://news.google.com/' + a_tags[0].get("href")[2:]
                         except Exception as deamp_e:
                             print(deamp_e)
                             link = article.find("article").get("jslog").split('2:')[1].split(';')[0]
                     else:
                         try:
-                            link = 'https://news.google.com/' + article.find("a").get("href")[2:]
+                            link = 'https://news.google.com/' + a_tags[0].get("href")[2:]
                         except Exception as deamp_e:
                             print(deamp_e)
                             link = None
@@ -370,7 +372,7 @@ class GoogleNews:
                         img = None
                     # site
                     try:
-                        site=article.find("time").parent.find("a").text
+                        site=time_node.parent.find("a").text
                     except:
                         site=None
                     try:
@@ -379,7 +381,7 @@ class GoogleNews:
                         media=None
                     # reporter
                     try:
-                        reporter = article.findAll('span')[2].text
+                        reporter = article.find_all('span')[2].text
                     except:
                         reporter = None
                     # collection
