@@ -38,25 +38,30 @@ def lexical_date_parser(date_to_check):
     return date_tmp,datetime_tmp
 
 
+# ⚡ Bolt: Cache month name mapping at module level to prevent recreating dictionary on every call
+MONTHS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Sept':9,'Oct':10,'Nov':11,'Dec':12, '01':1, '02':2, '03':3, '04':4, '05':5, '06':6, '07':7, '08':8, '09':9, '10':10, '11':11, '12':12}
+
 def define_date(date):
     try:
-        # cache lowercased string and current time for performance
+        # ⚡ Bolt: Call .lower() exactly once
         date_lower = date.lower()
         if ' ago' in date_lower:
             q = int(date.split()[-3])
+            # ⚡ Bolt: Cache current time once instead of re-evaluating
             now = datetime.datetime.now()
+            # ⚡ Bolt: Replace slow relativedelta with built-in datetime.timedelta where possible
             if 'minutes' in date_lower or 'mins' in date_lower:
-                return now + relativedelta(minutes=-q)
+                return now - datetime.timedelta(minutes=q)
             elif 'hour' in date_lower:
-                return now + relativedelta(hours=-q)
+                return now - datetime.timedelta(hours=q)
             elif 'day' in date_lower:
-                return now + relativedelta(days=-q)
+                return now - datetime.timedelta(days=q)
             elif 'week' in date_lower:
-                return now + relativedelta(days=-7*q)
+                return now - datetime.timedelta(days=7*q)
             elif 'month' in date_lower:
-                return now + relativedelta(months=-q)
+                return now - relativedelta(months=q)
         elif 'yesterday' in date_lower:
-            return datetime.datetime.now() + relativedelta(days=-1)
+            return datetime.datetime.now() - datetime.timedelta(days=1)
         else:
             date_list = date.replace('/',' ').split(' ')
             if len(date_list) == 2:
@@ -64,7 +69,7 @@ def define_date(date):
             elif len(date_list) == 3:
                 if date_list[0] == '':
                     date_list[0] = '1'
-            return datetime.datetime(day=int(date_list[0]), month=_MONTHS[date_list[1]], year=int(date_list[2]))
+            return datetime.datetime(day=int(date_list[0]), month=MONTHS[date_list[1]], year=int(date_list[2]))
     except:
         return float('nan')
 
