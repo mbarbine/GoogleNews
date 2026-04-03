@@ -8,13 +8,19 @@ from dateutil.parser import parse
 import datetime
 from dateutil.relativedelta import relativedelta
 import logging
+
+# Module-level cache for performance
+_MONTHS = {'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Sept':9,'Oct':10,'Nov':11,'Dec':12, '01':1, '02':2, '03':3, '04':4, '05':5, '06':6, '07':7, '08':8, '09':9, '10':10, '11':11, '12':12}
+_C_WIZ_REGEX = re.compile(r"^1;")
+
 ### METHODS
 
 def lexical_date_parser(date_to_check):
     if date_to_check=='':
         return ('',None)
     datetime_tmp=None
-    date_tmp=copy.copy(date_to_check)
+    # strings are immutable, avoiding redundant copy for performance
+    date_tmp=date_to_check
     try:
         date_tmp = date_tmp[date_tmp.rfind('..')+2:]
         datetime_tmp=dateparser.parse(date_tmp)
@@ -320,12 +326,14 @@ class GoogleNews:
             self.response = urllib.request.urlopen(self.req)  # nosec
             self.page = self.response.read()
             self.content = Soup(self.page, "html.parser")
-            articles = self.content.find_all("c-wiz", attrs={"data-node-index": re.compile(r"^1;")})
+            articles = self.content.find_all("c-wiz", attrs={"data-node-index": _C_WIZ_REGEX})
             for article in articles:
                 try:
+                    time_node = article.find("time")
+                    a_tags = article.find_all("a")
                     # title
                     try:
-                        title=article.findAll('a')[1].text
+                        title=a_tags[1].text
                     except:
                         title=None
                     # description
@@ -335,26 +343,26 @@ class GoogleNews:
                         desc=None
                     # date
                     try:
-                        date = article.find("time").text
+                        date = time_node.text
                         # date,datetime_tmp = lexial_date_parser(date)
                     except:
                         date = None
                     # datetime
                     try:
-                        datetime_chars=article.find('time').get('datetime')
+                        datetime_chars=time_node.get('datetime')
                         datetime_obj = parse(datetime_chars).replace(tzinfo=None)
                     except:
                         datetime_obj=None
                     # link
                     if deamplify:
                         try:
-                            link = 'https://news.google.com/' + article.find("a").get("href")[2:]
+                            link = 'https://news.google.com/' + a_tags[0].get("href")[2:]
                         except Exception as deamp_e:
                             print(deamp_e)
                             link = article.find("article").get("jslog").split('2:')[1].split(';')[0]
                     else:
                         try:
-                            link = 'https://news.google.com/' + article.find("a").get("href")[2:]
+                            link = 'https://news.google.com/' + a_tags[0].get("href")[2:]
                         except Exception as deamp_e:
                             print(deamp_e)
                             link = None
@@ -369,7 +377,7 @@ class GoogleNews:
                         img = None
                     # site
                     try:
-                        site=article.find("time").parent.find("a").text
+                        site=time_node.parent.find("a").text
                     except:
                         site=None
                     try:
@@ -378,7 +386,7 @@ class GoogleNews:
                         media=None
                     # reporter
                     try:
-                        reporter = article.findAll('span')[2].text
+                        reporter = article.find_all('span')[2].text
                     except:
                         reporter = None
                     # collection
