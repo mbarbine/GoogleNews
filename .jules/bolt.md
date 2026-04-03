@@ -1,3 +1,3 @@
-## 2024-05-16 - Cache DOM nodes in BeautifulSoup Loops
-**Learning:** Repetitive find()/find_all() calls on the same parent element within a loop create a measurable performance bottleneck during HTML parsing.
-**Action:** Always cache the result of find() or find_all() calls within the local scope of the loop if the element needs to be accessed multiple times.
+## 2024-05-15 - Redundant Object Creation in Hot Paths
+**Learning:** Instantiating static dictionaries (like month mappings), copying immutable objects (like strings), and repeatedly compiling regular expressions inside scraping loop/methods introduce noticeable overhead over hundreds/thousands of calls.
+**Action:** When working on scraping or loop-intensive processes, ensure that constant dictionaries and regex patterns are moved to module-level variables or cached appropriately. In Python, remember that strings are immutable and do not need to be copied when modified (slicing creates a new string).
