@@ -2,3 +2,7 @@
 **Vulnerability:** Found an SSRF vulnerability where `urllib.request.urlopen` was being called on arbitrarily constructed user input without validating the URL scheme, allowing the potential read of local files (like `/etc/passwd` using `file://`).
 **Learning:** `urllib.request.urlopen` supports standard schemes, such as `http`, `https`, and importantly, `file`. Failing to check `req.type` (which tracks the url scheme) can expose arbitrary file reads across the filesystem where the Python process operates.
 **Prevention:** Always ensure the scheme of URLs passed to `urllib.request.urlopen` is restricted to an allowlist of valid schemes, primarily `http` and `https`, by explicitly checking `req.type` before making requests. Add `# nosec` to suppress static code analysis tools that flag these functions after safely validating.
+## 2024-04-22 - Python urllib.request.urlopen Default Hang Vulnerability
+**Vulnerability:** External network requests were being made using `urllib.request.urlopen()` without an explicit timeout parameter.
+**Learning:** Python's standard `urllib.request.urlopen` function blocks indefinitely by default. In a web scraping library, this means that if a target server hangs, the library thread executing the request will also hang indefinitely, potentially leading to resource exhaustion and Denial of Service (DoS).
+**Prevention:** Always explicitly define a reasonable `timeout` parameter (e.g., 30 seconds) on any network requests made with `urllib` or similar networking libraries to ensure the system can fail fast and recover.
