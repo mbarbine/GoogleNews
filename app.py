@@ -22,6 +22,13 @@ html_content = """<!DOCTYPE html>
     document.getElementById('search-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const resultsDiv = document.getElementById('results');
+      const searchInput = document.getElementById('q');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      searchInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Searching...';
+
       resultsDiv.innerHTML = '<p aria-busy="true">Loading...</p>';
       try {
         const q = document.getElementById('q').value;
@@ -45,7 +52,13 @@ html_content = """<!DOCTYPE html>
           div.appendChild(p);
           resultsDiv.appendChild(div);
         });
-      } catch (err) { resultsDiv.innerHTML = '<p>Error loading results.</p>'; }
+      } catch (err) {
+        resultsDiv.innerHTML = '<p>Error loading results.</p>';
+      } finally {
+        searchInput.disabled = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Search';
+      }
     });
   </script>
 </body>
