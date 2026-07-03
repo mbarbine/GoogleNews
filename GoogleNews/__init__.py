@@ -98,6 +98,7 @@ class GoogleNews:
         self.__version = '1.6.16'
         self.__topic = None
         self.__section = None
+        self.__timeout = 30 # Sentinel: Default timeout to prevent resource exhaustion
 
     def getVersion(self):
         return self.__version
@@ -156,7 +157,7 @@ class GoogleNews:
         self.req = urllib.request.Request(self.url.replace("search?","search?hl=en&gl=en&"), headers=self.headers)
         if self.req.type not in ('http', 'https'):
             raise ValueError(f"Unsupported URL scheme: {self.req.type}")
-        self.response = urllib.request.urlopen(self.req)  # nosec
+        self.response = urllib.request.urlopen(self.req, timeout=self.__timeout)  # nosec
         self.page = self.response.read()
         self.content = Soup(self.page, "html.parser")
         stats = self.content.find_all("div", id="result-stats")
@@ -323,7 +324,7 @@ class GoogleNews:
             self.req = urllib.request.Request(self.url, headers=self.headers)
             if self.req.type not in ('http', 'https'):
                 raise ValueError(f"Unsupported URL scheme: {self.req.type}")
-            self.response = urllib.request.urlopen(self.req)  # nosec
+            self.response = urllib.request.urlopen(self.req, timeout=self.__timeout)  # nosec
             self.page = self.response.read()
             self.content = Soup(self.page, "html.parser")
             articles = self.content.find_all("c-wiz", attrs={"data-node-index": _C_WIZ_REGEX})
